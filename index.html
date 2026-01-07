@@ -9,6 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            cursor: none !important;
         }
 
         body {
@@ -46,6 +47,110 @@
             width: 100%;
             height: 100%;
             z-index: -1;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #64b4ff;
+            box-shadow: 0 0 10px rgba(100, 180, 255, 0.8);
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .crosshair::after {
+            height: 2px;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .crosshair-center {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border: 2px solid #64b4ff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(100, 180, 255, 0.8);
+        }
+
+        body.light-theme .crosshair::before,
+        body.light-theme .crosshair::after {
+            background: #4a9eff;
+            box-shadow: 0 0 10px rgba(74, 158, 255, 0.8);
+        }
+
+        body.light-theme .crosshair-center {
+            border-color: #4a9eff;
+            box-shadow: 0 0 10px rgba(74, 158, 255, 0.8);
+        }
+
+        .shahed {
+            position: fixed;
+            width: 80px;
+            height: 80px;
+            z-index: 1;
+            transition: transform 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            pointer-events: auto;
+        }
+
+        .shahed:hover {
+            transform: scale(1.05);
+        }
+
+        .shahed svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.4));
+        }
+
+        .explosion {
+            position: fixed;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .explosion-particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: explode 0.8s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
         }
 
         header {
@@ -125,7 +230,6 @@
         }
 
         .theme-toggle {
-            cursor: pointer;
             width: 50px;
             height: 26px;
             background: rgba(100, 180, 255, 0.2);
@@ -217,7 +321,6 @@
             background: linear-gradient(135deg, #3a8eef, #5aa9ff);
             border: none;
             color: #fff;
-            cursor: pointer;
             border-radius: 50px;
             transition: all 0.3s;
             text-transform: uppercase;
@@ -257,6 +360,12 @@
 <body>
     <canvas id="particleCanvas"></canvas>
 
+    <div class="custom-cursor">
+        <div class="crosshair">
+            <div class="crosshair-center"></div>
+        </div>
+    </div>
+
     <header>
         <div class="logo">SkyInFlames</div>
         <nav>
@@ -292,7 +401,140 @@
         const particleCount = 100;
         let mouse = { x: null, y: null, radius: 150 };
         let isDarkTheme = true;
+        const shaheds = [];
+        const shahedCount = 8;
 
+        // Custom cursor
+        const customCursor = document.querySelector('.custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            customCursor.style.left = e.clientX + 'px';
+            customCursor.style.top = e.clientY + 'px';
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        // Shahed object
+        class Shahed {
+            constructor() {
+                this.x = Math.random() * window.innerWidth;
+                this.y = -100;
+                this.speed = Math.random() * 1.2 + 0.8;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = (Math.random() - 0.5) * 1;
+                this.wobble = 0;
+                this.wobbleSpeed = Math.random() * 0.05 + 0.02;
+                this.element = document.createElement('div');
+                this.element.className = 'shahed';
+                this.element.innerHTML = `
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Main body -->
+                        <ellipse cx="50" cy="50" rx="8" ry="28" fill="#2a2a2a" />
+                        
+                        <!-- Wings -->
+                        <ellipse cx="50" cy="45" rx="35" ry="6" fill="#3a3a3a" opacity="0.9" />
+                        
+                        <!-- Tail fins -->
+                        <polygon points="50,75 45,85 50,83 55,85" fill="#3a3a3a" />
+                        <polygon points="42,70 38,80 42,78" fill="#3a3a3a" />
+                        <polygon points="58,70 62,80 58,78" fill="#3a3a3a" />
+                        
+                        <!-- Nose cone -->
+                        <ellipse cx="50" cy="24" rx="5" ry="8" fill="#1a1a1a" />
+                        
+                        <!-- Engine exhaust -->
+                        <ellipse cx="50" cy="76" rx="3" ry="4" fill="#ff4400" opacity="0.6" />
+                        
+                        <!-- Details -->
+                        <line x1="50" y1="30" x2="50" y2="70" stroke="#1a1a1a" stroke-width="1" />
+                        <circle cx="50" cy="50" r="2" fill="#ff0000" opacity="0.8" />
+                    </svg>
+                `;
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                document.body.appendChild(this.element);
+                
+                this.element.addEventListener('click', () => this.explode());
+            }
+
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+                this.wobble += this.wobbleSpeed;
+                
+                const wobbleX = Math.sin(this.wobble) * 15;
+                
+                this.element.style.top = this.y + 'px';
+                this.element.style.left = (this.x + wobbleX) + 'px';
+                this.element.style.transform = `rotate(${this.rotation + Math.sin(this.wobble) * 5}deg)`;
+
+                if (this.y > window.innerHeight + 100) {
+                    this.reset();
+                }
+            }
+
+            reset() {
+                this.x = Math.random() * window.innerWidth;
+                this.y = -100;
+                this.speed = Math.random() * 1.2 + 0.8;
+                this.rotation = Math.random() * 360;
+                this.wobble = 0;
+            }
+
+            explode() {
+                const rect = this.element.getBoundingClientRect();
+                createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                this.reset();
+            }
+
+            remove() {
+                this.element.remove();
+            }
+        }
+
+        function createExplosion(x, y) {
+            const explosionContainer = document.createElement('div');
+            explosionContainer.className = 'explosion';
+            explosionContainer.style.left = x + 'px';
+            explosionContainer.style.top = y + 'px';
+            document.body.appendChild(explosionContainer);
+
+            const colors = ['#ff6b00', '#ff8c00', '#ffaa00', '#ff4500', '#ff0000'];
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'explosion-particle';
+                const size = Math.random() * 15 + 5;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const velocity = Math.random() * 100 + 50;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+                
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+                
+                explosionContainer.appendChild(particle);
+            }
+
+            setTimeout(() => {
+                explosionContainer.remove();
+            }, 800);
+        }
+
+        // Initialize shaheds
+        for (let i = 0; i < shahedCount; i++) {
+            shaheds.push(new Shahed());
+        }
+
+        function updateShaheds() {
+            shaheds.forEach(shahed => shahed.update());
+        }
+
+        // Particle system
         class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
@@ -371,6 +613,7 @@
             });
 
             connect();
+            updateShaheds();
             requestAnimationFrame(animate);
         }
 
@@ -382,7 +625,6 @@
         const themeIcon = document.getElementById('themeIcon');
         const body = document.body;
 
-        // Load saved theme
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             body.classList.add('light-theme');
@@ -409,11 +651,6 @@
             init();
         });
 
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
         window.addEventListener('mouseleave', () => {
             mouse.x = null;
             mouse.y = null;
@@ -432,5 +669,4 @@
         });
     </script>
 </body>
-
-</html> 
+</html>
