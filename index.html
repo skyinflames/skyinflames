@@ -109,8 +109,8 @@
 
         .shahed {
             position: fixed;
-            width: 80px;
-            height: 80px;
+            width: 40px;
+            height: 40px;
             z-index: 1;
             transition: transform 0.1s;
             user-select: none;
@@ -121,13 +121,13 @@
         }
 
         .shahed:hover {
-            transform: scale(1.05);
+            transform: scale(1.2);
         }
 
         .shahed svg {
             width: 100%;
             height: 100%;
-            filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.4));
+            filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.4));
         }
 
         .explosion {
@@ -398,11 +398,11 @@
         canvas.height = window.innerHeight;
 
         const particles = [];
-        const particleCount = 100;
+        const particleCount = 0;
         let mouse = { x: null, y: null, radius: 150 };
         let isDarkTheme = true;
         const shaheds = [];
-        const shahedCount = 8;
+        const shahedCount = 100;
 
         // Custom cursor
         const customCursor = document.querySelector('.custom-cursor');
@@ -417,14 +417,16 @@
         class Shahed {
             constructor() {
                 this.x = Math.random() * window.innerWidth;
-                this.y = -100;
-                this.speed = Math.random() * 1.2 + 0.8;
+                this.y = Math.random() * window.innerHeight;
+                this.speed = Math.random() * 0.5 + 0.3;
                 this.rotation = Math.random() * 360;
-                this.rotationSpeed = (Math.random() - 0.5) * 1;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.5;
                 this.wobble = 0;
-                this.wobbleSpeed = Math.random() * 0.05 + 0.02;
+                this.wobbleSpeed = Math.random() * 0.03 + 0.01;
+                this.opacity = Math.random() * 0.4 + 0.4;
                 this.element = document.createElement('div');
                 this.element.className = 'shahed';
+                this.element.style.opacity = this.opacity;
                 this.element.innerHTML = `
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                         <!-- Main body -->
@@ -461,29 +463,40 @@
                 this.rotation += this.rotationSpeed;
                 this.wobble += this.wobbleSpeed;
                 
-                const wobbleX = Math.sin(this.wobble) * 15;
+                const wobbleX = Math.sin(this.wobble) * 8;
+                
+                // Interaction with mouse
+                if (mouse.x !== null && mouse.y !== null) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius) {
+                        const force = (mouse.radius - distance) / mouse.radius;
+                        const angle = Math.atan2(dy, dx);
+                        this.x -= Math.cos(angle) * force * 2;
+                        this.y -= Math.sin(angle) * force * 2;
+                    }
+                }
                 
                 this.element.style.top = this.y + 'px';
                 this.element.style.left = (this.x + wobbleX) + 'px';
-                this.element.style.transform = `rotate(${this.rotation + Math.sin(this.wobble) * 5}deg)`;
+                this.element.style.transform = `rotate(${this.rotation + Math.sin(this.wobble) * 3}deg)`;
 
                 if (this.y > window.innerHeight + 100) {
-                    this.reset();
+                    this.y = -50;
+                    this.x = Math.random() * window.innerWidth;
                 }
-            }
-
-            reset() {
-                this.x = Math.random() * window.innerWidth;
-                this.y = -100;
-                this.speed = Math.random() * 1.2 + 0.8;
-                this.rotation = Math.random() * 360;
-                this.wobble = 0;
+                
+                if (this.x < -50) this.x = window.innerWidth + 50;
+                if (this.x > window.innerWidth + 50) this.x = -50;
             }
 
             explode() {
                 const rect = this.element.getBoundingClientRect();
                 createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
-                this.reset();
+                this.y = -50;
+                this.x = Math.random() * window.innerWidth;
             }
 
             remove() {
@@ -607,12 +620,6 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            particles.forEach(particle => {
-                particle.update();
-                particle.draw();
-            });
-
-            connect();
             updateShaheds();
             requestAnimationFrame(animate);
         }
