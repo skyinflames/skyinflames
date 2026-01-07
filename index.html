@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyInFlames</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a1628;
+            color: #e8f0f8;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.light-theme {
+            background: #f0f4f8;
+            color: #1a2d4a;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #1a2d4a 0%, #0a1628 100%);
+            z-index: -1;
+            transition: background 0.3s ease;
+        }
+
+        body.light-theme .bg-animation {
+            background: radial-gradient(ellipse at center, #e0eaf5 0%, #f0f4f8 100%);
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(10, 22, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 180, 255, 0.2);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        body.light-theme header {
+            background: rgba(255, 255, 255, 0.85);
+            border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #4a9eff, #64b4ff, #a0d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+        }
+
+        body.light-theme .logo {
+            background: linear-gradient(135deg, #2a7edf, #4a9eff, #5aa9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        nav a {
+            color: #b8d4f0;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        body.light-theme nav a {
+            color: #2a5580;
+        }
+
+        nav a:hover {
+            color: #64b4ff;
+        }
+
+        body.light-theme nav a:hover {
+            color: #4a9eff;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #4a9eff, #64b4ff);
+            transition: width 0.3s;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 50px;
+            height: 26px;
+            background: rgba(100, 180, 255, 0.2);
+            border-radius: 30px;
+            position: relative;
+            transition: background 0.3s;
+            border: 1px solid rgba(100, 180, 255, 0.3);
+        }
+
+        body.light-theme .theme-toggle {
+            background: rgba(74, 158, 255, 0.2);
+            border: 1px solid rgba(74, 158, 255, 0.4);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(100, 180, 255, 0.3);
+        }
+
+        body.light-theme .theme-toggle:hover {
+            background: rgba(74, 158, 255, 0.3);
+        }
+
+        .theme-toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #64b4ff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        body.light-theme .theme-toggle-slider {
+            transform: translateX(24px);
+            background: #4a9eff;
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 80px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #5aa9ff, #7ec8ff, #a8dbff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        body.light-theme .hero h1 {
+            background: linear-gradient(135deg, #2a7edf, #4a9eff, #64b4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(90, 169, 255, 0.4)); }
+            50% { filter: drop-shadow(0 0 25px rgba(126, 200, 255, 0.6)); }
+        }
+
+        .hero p {
+            font-size: 22px;
+            margin-bottom: 40px;
+            color: #b0c8e0;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        body.light-theme .hero p {
+            color: #4a6580;
+        }
+
+        .cta-button {
+            padding: 18px 50px;
+            font-size: 19px;
+            background: linear-gradient(135deg, #3a8eef, #5aa9ff);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(58, 142, 239, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(58, 142, 239, 0.5);
+            background: linear-gradient(135deg, #4a9eff, #6ab9ff);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            background: rgba(10, 22, 40, 0.9);
+            border-top: 1px solid rgba(90, 169, 255, 0.2);
+            color: #6a8090;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.light-theme footer {
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(74, 158, 255, 0.3);
+            color: #5a7090;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 48px; }
+            .hero p { font-size: 18px; }
+            header { padding: 15px 20px; }
+            nav { gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <header>
+        <div class="logo">SkyInFlames</div>
+        <nav>
+            <a href="#home">Головна</a>
+            <a href="https://www.tiktok.com/@skyinflames_game/video/7551879673911938315" target="_blank">Геймплей</a>
+            <a href="https://discord.gg/raaB6fD3" target="_blank">Спільнота</a>
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-toggle-slider">
+                    <span id="themeIcon">🌙</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero" id="home">
+        <h1>SKY IN FLAMES</h1>
+        <p></p>
+        <button class="cta-button" onclick="window.open('https://store.steampowered.com/app/4031360/SkyInFlames/', '_blank')">Грати зараз</button>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 SkyInFlames. Усі права захищені. Made with love!</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 100;
+        let mouse = { x: null, y: null, radius: 150 };
+        let isDarkTheme = true;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+
+                if (mouse.x !== null && mouse.y !== null) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius) {
+                        const force = (mouse.radius - distance) / mouse.radius;
+                        const angle = Math.atan2(dy, dx);
+                        this.x -= Math.cos(angle) * force * 2;
+                        this.y -= Math.sin(angle) * force * 2;
+                    }
+                }
+            }
+
+            draw() {
+                const color = isDarkTheme ? '100, 180, 255' : '74, 158, 255';
+                ctx.fillStyle = `rgba(${color}, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles.length = 0;
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function connect() {
+            const color = isDarkTheme ? '100, 180, 255' : '74, 158, 255';
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        ctx.strokeStyle = `rgba(${color}, ${0.15 * (1 - distance / 120)})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            connect();
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const body = document.body;
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            body.classList.add('light-theme');
+            themeIcon.textContent = '☀️';
+            isDarkTheme = false;
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            isDarkTheme = !isDarkTheme;
+            
+            if (body.classList.contains('light-theme')) {
+                themeIcon.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeIcon.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
