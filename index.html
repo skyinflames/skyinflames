@@ -394,6 +394,72 @@
     flex: 1;
     height: 4px;
 }
+/* ========================= */
+/* 📱 MOBILE ADAPTATION 📱 */
+/* ========================= */
+
+@media (max-width: 768px) {
+
+    /* убираем кастомный курсор */
+    * {
+        cursor: auto !important;
+    }
+
+    .custom-cursor {
+        display: none !important;
+    }
+
+    /* header */
+    header {
+        padding: 12px 16px;
+    }
+
+    .logo {
+        font-size: 22px;
+    }
+
+    nav {
+        gap: 12px;
+    }
+
+    nav a {
+        font-size: 14px;
+    }
+
+    /* hero */
+    .hero h1 {
+        font-size: 42px;
+        line-height: 1.1;
+    }
+
+    .hero p {
+        font-size: 16px;
+    }
+
+    .cta-button {
+        padding: 14px 32px;
+        font-size: 16px;
+    }
+
+    /* music player */
+    .music-player {
+        left: 50%;
+        right: auto;
+        bottom: 12px;
+        transform: translateX(-50%);
+        width: calc(100% - 24px);
+        max-width: 360px;
+    }
+
+    /* heavy effects off */
+    canvas {
+        display: none;
+    }
+
+    .shahed {
+        display: none;
+    }
+}
     </style>
 </head>
 <body>
